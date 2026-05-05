@@ -10,7 +10,7 @@ The larger the $\chi^2$ value, the more your actual data deviates from the expec
 $p_{value}$: it is the probability of observing a **Chi-Square statistic ($X^2$)** as large as (or larger than) the one you just calculated from your entire contingency table, assuming that $H_0$ (perfect independence) is true. 
 
 
-> [!quote] Area under the $\chi^2$ distribution
+> Area under the $\chi^2$ distribution
 > To find the probability of a particular value, we find the area under the curve before the value. The area that's after the value is called the p-value
 
 Before running an experiment, scientists set a "threshold for guilt," known as the **Significance Level ($\alpha$)**. The most common threshold is **0.05** (or 5%).
