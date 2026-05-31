@@ -1,1 +1,15 @@
-{"model_name": "XGBoost", "validation_macro_f1": 0.8159}
+{
+  "model_name": "XGBoost",
+  "validation_macro_f1": 0.8147,
+  "best_params": {
+    "classifier__learning_rate": "0.1",
+    "classifier__max_depth": "3",
+    "classifier__n_estimators": "100",
+    "smote__sampling_strategy": "0.7"
+  },
+  "nested_cv_scores": {
+    "Random Forest": 0.8019,
+    "SVM": 0.7986,
+    "XGBoost": 0.8118
+  }
+}
