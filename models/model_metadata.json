@@ -9,7 +9,7 @@
   },
   "nested_cv_scores": {
     "Random Forest": 0.8019,
-    "SVM": 0.7988,
+    "SVM": 0.7986,
     "XGBoost": 0.8118
   }
 }
