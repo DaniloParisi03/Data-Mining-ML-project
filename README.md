@@ -31,7 +31,7 @@ Data-Mining-ML-project/
 ├── jupyter/
 │   ├── 1_Exploratory_Data_Analysis.ipynb          # EDA, chi-square, mutual information, LOF profiling
 │   ├── 2_Nested_CV_and_Strict_Pipelines.ipynb     # Model training: RF vs SVM vs XGBoost (Nested CV)
-│   ├── 3_Evaluation_Ablation_and_XAI.ipynb        # Final evaluation, ablation studies, ROC/PR, SHAP
+│   ├── 3_Evaluation_Ablation_and_XAI.ipynb        # Final evaluation, ablation studies, ROC/PR, SHAP, LIME
 │   ├── 4_Class_Balancing_Experiments.ipynb        # SMOTE ratio experiment (justifies sampling_strategy=0.7)
 │   └── utils/
 │       └── lof_sampler.py                         # Shared LOF_Sampler custom imbalanced-learn class
@@ -39,6 +39,9 @@ Data-Mining-ML-project/
 ├── models/
 │   ├── final_best_pipeline.pkl                    # Serialised champion XGBoost pipeline (joblib)
 │   └── model_metadata.json                        # Champion params, nested CV scores for all 3 models
+│
+├── figures/
+│   └── fig_01 … fig_08.png                        # Pre-generated report figures (150 dpi)
 │
 └── 2_locked_test_data/
     ├── X_test_locked.csv                          # Hold-out feature matrix (sealed by Notebook 2)
@@ -77,7 +80,7 @@ Notebooks **must be executed in order** (each notebook depends on outputs from t
 |---|---|---|---|
 | 1 | `1_Exploratory_Data_Analysis.ipynb` | EDA plots, chi-square table | ~2 min |
 | 2 | `2_Nested_CV_and_Strict_Pipelines.ipynb` | `models/`, `2_locked_test_data/` | ~15–20 min |
-| 3 | `3_Evaluation_Ablation_and_XAI.ipynb` | Evaluation plots, SHAP charts | ~5 min |
+| 3 | `3_Evaluation_Ablation_and_XAI.ipynb` | Evaluation plots, SHAP charts, LIME explanation | ~5 min |
 | 4 | `4_Class_Balancing_Experiments.ipynb` | SMOTE comparison chart | ~3 min |
 
 ### Launch Jupyter

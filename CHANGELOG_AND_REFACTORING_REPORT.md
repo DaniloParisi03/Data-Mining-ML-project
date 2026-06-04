@@ -30,7 +30,7 @@ Data-Mining-ML-project/
 ├── jupyter/
 │   ├── 1_Exploratory_Data_Analysis.ipynb          # EDA + feature selection analysis
 │   ├── 2_Nested_CV_and_Strict_Pipelines.ipynb     # Model training, tuning, model persistence
-│   ├── 3_Evaluation_Ablation_and_XAI.ipynb        # Evaluation, ablation, ROC/PR, SHAP
+│   ├── 3_Evaluation_Ablation_and_XAI.ipynb        # Evaluation, ablation, ROC/PR, SHAP, LIME
 │   ├── 4_Class_Balancing_Experiments.ipynb        # SMOTE methodology experiments
 │   └── utils/
 │       └── lof_sampler.py                         # Shared LOF_Sampler class (NEW)
@@ -38,6 +38,9 @@ Data-Mining-ML-project/
 ├── models/
 │   ├── final_best_pipeline.pkl                    # Serialised champion pipeline (UPDATED)
 │   └── model_metadata.json                        # Champion model metadata (UPDATED)
+│
+├── figures/
+│   └── fig_01 … fig_08.png                        # Pre-generated report figures (150 dpi) (NEW)
 │
 └── 2_locked_test_data/
     ├── X_test_locked.csv                          # Locked hold-out features (UPDATED)
@@ -380,20 +383,22 @@ The original README contained a single-line description. It was replaced with a 
 ### `3_Evaluation_Ablation_and_XAI.ipynb`
 | Cell | Type | Purpose |
 |---|---|---|
-| 0 | Markdown | Objectives (updated to include both ablations and ROC/PR) |
+| 0 | Markdown | Objectives |
 | 1 | Code | Data load, D_train reconstruct, locked test load, LOF utility, model load |
 | 2 | Markdown | Ablation Section 1.1: LOF |
 | 3 | Code | LOF ablation — compare champion vs same pipeline without LOF |
-| 4 | Markdown | Ablation Section 1.2: Region *(NEW)* |
-| 5 | Code | Region ablation — compare 24-feature vs 25-feature pipeline *(NEW)* |
+| 4 | Markdown | Ablation Section 1.2: Region |
+| 5 | Code | Region ablation — compare 24-feature vs 25-feature pipeline |
 | 6 | Markdown | Final Test Set Evaluation |
 | 7 | Code | Unseal D_test, `champion_pipeline.predict`, confusion matrix, classification report |
-| 8 | Markdown | ROC / PR / Threshold intro *(NEW)* |
-| 9 | Code | ROC curve, PR curve, optimal threshold sweep + side-by-side plot *(NEW)* |
+| 8 | Markdown | ROC / PR / Threshold intro |
+| 9 | Code | ROC curve, PR curve, optimal threshold sweep + side-by-side plot |
 | 10 | Markdown | SHAP explanation |
 | 11 | Code | SHAP global: `summary_plot` (feature importance across D_test) |
-| 12 | Code | SHAP local: `waterfall` plots for FP and FN instances |
-| 13 | Markdown | Summary and Conclusions *(NEW)* |
+| 12 | Code | SHAP local: `waterfall` plots for TP, FP and FN instances |
+| 13 | Markdown | LIME intro |
+| 14 | Code | LIME local explanation for the False Positive instance |
+| 15 | Markdown | Summary and Conclusions |
 
 ---
 
@@ -427,6 +432,91 @@ class LOF_Sampler(BaseSampler):
 ```python
 %run utils/lof_sampler.py
 ```
+
+---
+
+### CHANGE 14 — Add Pearson heatmap to NB1; add `plt.savefig` to all figure cells; create `figures/` directory
+
+**Files created:** `figures/fig_01_class_dist.png` through `figures/fig_08_shap_waterfall.png`  
+**Files modified:** `jupyter/1_Exploratory_Data_Analysis.ipynb`, `jupyter/3_Evaluation_Ablation_and_XAI.ipynb`
+
+**What changed:**  
+The Pearson correlation heatmap was referenced in the LaTeX report (`fig:corr`) but did not exist in NB1. A new code cell was inserted to generate and save it. `plt.savefig()` calls were added to all seven other figure-producing cells across NB1 and NB3, and the `figures/` directory was created to collect all eight output PNGs at 150 dpi.
+
+**Reason:**  
+All figures referenced in the LaTeX report must be real, generated images that the author can upload to Overleaf. Without savefig calls, figures only display inline and cannot be exported programmatically.
+
+---
+
+### CHANGE 15 — Add CV scores bar chart with ±2 std deviation error bars to NB2 (Danilo Parisi, 03/06/2026)
+
+**Files modified:** `jupyter/2_Nested_CV_and_Strict_Pipelines.ipynb` — new cell at index 8 (updated)
+
+**What changed:**  
+The original static bar chart (using hardcoded values from `model_metadata.json`) was replaced by a dynamically computed chart that reads live fold scores (`rf_scores`, `svm_scores`, `xgb_scores`) and adds `yerr=cv_errors` error bars representing ±2 standard deviations across the five outer folds.
+
+**Scientific justification:**  
+Reporting only the mean Macro F1 of nested CV without variance understates the uncertainty in the estimate. Error bars allow a reader to visually assess whether differences between models are meaningful or within noise. This is standard practice in ML benchmarking papers.
+
+---
+
+### CHANGE 16 — Fix SHAP feature name mismatch in NB3 Cell 11 (Danilo Parisi, 03/06/2026)
+
+**Files modified:** `jupyter/3_Evaluation_Ablation_and_XAI.ipynb` — Cell 11
+
+**What changed:**  
+The SHAP `TreeExplainer` was previously passed a pandas DataFrame, which could trigger a feature-name mismatch error between the DataFrame's column names and the XGBoost model's internal feature names (set during training via the pipeline). The fix:
+1. Scales the test set to a raw NumPy array: `X_test_scaled = scaler.transform(X_test)`
+2. Passes the NumPy array to `shap.TreeExplainer`
+3. Manually re-attaches feature names: `shap_values.feature_names = list(X_test.columns)`
+
+This avoids the `ValueError` while preserving readable feature names in all SHAP plots.
+
+---
+
+### CHANGE 17 — Add LIME local explainability for False Positive analysis (Danilo Parisi, 03/06/2026)
+
+**Files modified:** `jupyter/3_Evaluation_Ablation_and_XAI.ipynb` — new Cells 13–15  
+**Files modified:** `requirements.txt` — added `lime==0.2.0.1`
+
+**What changed:**  
+A LIME (Local Interpretable Model-Agnostic Explanations) analysis block was added as Cells 13–15 of NB3. It explains the same False Positive instance already analysed by SHAP's waterfall plot, allowing a direct comparison between the two explainability frameworks. A wrapper function correctly bridges the fitted `StandardScaler` from the pipeline with LIME's tabular explainer.
+
+**Scientific value:**  
+LIME is model-agnostic and approximates the decision boundary locally with a linear model. When its feature attributions agree with SHAP's tree-exact values, this provides convergent validity for the explanation. Discrepancies reveal where SHAP's global approximation and LIME's local linear approximation diverge, which is itself informative about the model's complexity in that region of feature space.
+
+---
+
+### CHANGE 18 — Add `.gitignore`; untrack committed Jupyter checkpoint files
+
+**Files created:** `.gitignore`  
+**Files removed from tracking:** `jupyter/.ipynb_checkpoints/*.ipynb` (4 files)
+
+**What changed:**  
+Jupyter's `.ipynb_checkpoints/` folder (auto-generated auto-save artefacts) was accidentally committed. The four checkpoint files were removed from git tracking via `git rm --cached`. A `.gitignore` was created to permanently exclude checkpoints, Python cache, OS metadata, and IDE configuration files from future commits.
+
+**Why this matters:**  
+Checkpoint files are auto-generated, change on every save, and carry no useful history. Including them inflates the git diff on every commit and makes the repository harder to navigate.
+
+---
+
+### CHANGE 19 — Fix data leakage in LIME: use `X_train` as background distribution
+
+**Files modified:** `jupyter/3_Evaluation_Ablation_and_XAI.ipynb` — Cell 14
+
+**What changed:**
+```python
+# BEFORE (leakage)
+explainer_lime = lime.lime_tabular.LimeTabularExplainer(
+    training_data=X_test.values, ...)
+
+# AFTER (correct)
+explainer_lime = lime.lime_tabular.LimeTabularExplainer(
+    training_data=X_train.values, ...)
+```
+
+**Technical justification:**  
+LIME's `training_data` parameter is used to compute per-feature statistics (mean, standard deviation) for generating the local perturbations used to build the surrogate linear model. Passing `X_test.values` allowed the test set's marginal distributions to influence the explanation process — a form of information leakage. The correct value is `X_train.values`, which is already in scope from the D_train reconstruction at the top of NB3. This fix ensures that LIME's explanations are built entirely from training-set statistics, consistent with how the model itself was trained.
 
 ---
 
