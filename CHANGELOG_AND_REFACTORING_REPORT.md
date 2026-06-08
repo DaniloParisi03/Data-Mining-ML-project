@@ -319,12 +319,14 @@ seaborn==0.13.2
 scipy==1.15.3
 joblib==1.5.3
 notebook==7.5.5
+ipykernel
 nbconvert==7.17.0
 nbformat==5.10.4
 nbclient==0.10.4
+lime==0.2.0.1
 ```
 
-All versions are exact pins reflecting the `DMML_AY2526` conda environment in which the project was developed and validated.
+The modelling libraries are pinned to the versions used to validate the project. `ipykernel` is listed explicitly because it is required for a Python environment to run the notebooks through the portable `Python 3` Jupyter kernel. The notebooks intentionally keep generic Jupyter kernel metadata (`display_name: Python 3`, `name: python3`) so the project does **not** depend on any local course-specific Conda environment name.
 
 ---
 

@@ -52,17 +52,28 @@ Data-Mining-ML-project/
 
 ## Environment Setup
 
-This project was developed with **Python 3.10** in a dedicated Conda environment named `DMML_AY2526`.
+This project targets **Python 3.10+** with dependencies installed from `requirements.txt`.
+
+The notebooks intentionally use the portable Jupyter kernel metadata:
+
+```text
+display_name: Python 3
+name: python3
+```
+
+Do **not** require a local course-specific Conda environment name in the project files. Any correctly configured Python environment with the packages from `requirements.txt` is valid.
+
+`ipykernel` is included in `requirements.txt` because it is the runtime bridge that allows the selected Python environment to execute Jupyter notebook cells as a **Python 3** kernel.
 
 ### Option A — Conda (recommended)
 
 ```bash
-conda create -n DMML_AY2526 python=3.10 -y
-conda activate DMML_AY2526
+conda create -n online-shoppers-ml python=3.10 -y
+conda activate online-shoppers-ml
 pip install -r requirements.txt
 ```
 
-### Option B — pip (any Python 3.10 environment)
+### Option B — pip (any Python 3.10+ environment)
 
 ```bash
 pip install -r requirements.txt
@@ -86,11 +97,11 @@ Notebooks **must be executed in order** (each notebook depends on outputs from t
 ### Launch Jupyter
 
 ```bash
-conda activate DMML_AY2526
+conda activate online-shoppers-ml
 jupyter notebook
 ```
 
-Then open each notebook from the `jupyter/` folder and run **Kernel → Restart & Run All**.
+Then open each notebook from the `jupyter/` folder, select the generic **Python 3** kernel, and run **Kernel → Restart & Run All**.
 
 ---
 

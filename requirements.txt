@@ -9,6 +9,7 @@ seaborn==0.13.2
 scipy==1.15.3
 joblib==1.5.3
 notebook==7.5.5
+ipykernel
 nbconvert==7.17.0
 nbformat==5.10.4
 nbclient==0.10.4
