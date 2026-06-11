@@ -55,11 +55,12 @@ Data-Mining-ML-project/
 │   └── model_metadata.json                        # Champion params, nested CV scores for all 3 models
 │
 ├── figures/
-│   └── fig_01 … fig_10.png                        # Pre-generated notebook/report figures (150 dpi)
+│   └── fig_01 … fig_11.png                        # Pre-generated notebook/report figures (150 dpi)
 │
 └── 2_locked_test_data/
     ├── X_test_locked.csv                          # Hold-out feature matrix (sealed by Notebook 2)
-    └── y_test_locked.csv                          # Hold-out labels (sealed by Notebook 2)
+    ├── y_test_locked.csv                          # Hold-out labels (sealed by Notebook 2)
+    └── preprocessing_results.xlsx                 # Supporting locked-split preprocessing summary
 ```
 
 ---

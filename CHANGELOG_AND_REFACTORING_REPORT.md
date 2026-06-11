@@ -42,11 +42,12 @@ Data-Mining-ML-project/
 │   └── model_metadata.json                        # Champion model metadata (UPDATED)
 │
 ├── figures/
-│   └── fig_01 … fig_10.png                        # Pre-generated notebook/report figures (150 dpi)
+│   └── fig_01 … fig_11.png                        # Pre-generated notebook/report figures (150 dpi)
 │
 └── 2_locked_test_data/
     ├── X_test_locked.csv                          # Locked hold-out features (UPDATED)
-    └── y_test_locked.csv                          # Locked hold-out labels (unchanged)
+    ├── y_test_locked.csv                          # Locked hold-out labels (unchanged)
+    └── preprocessing_results.xlsx                 # Supporting locked-split preprocessing summary
 ```
 
 ---
@@ -452,7 +453,7 @@ class LOF_Sampler(BaseSampler):
 
 ### CHANGE 14 — Add Pearson heatmap to NB1; add `plt.savefig` to all figure cells; create `figures/` directory
 
-**Files created:** `figures/fig_01_class_dist.png` through `figures/fig_10_error_profile.png`
+**Files created:** `figures/fig_01_class_dist.png` through `figures/fig_11_lime_fp.png`
 **Files modified:** `jupyter/1_Exploratory_Data_Analysis.ipynb`, `jupyter/3_Evaluation_Ablation_and_XAI.ipynb`
 
 **What changed:**  
