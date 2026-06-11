@@ -40,7 +40,6 @@ Data-Mining-ML-project/
 ├── .python-version                      # Python runtime marker: 3.10
 ├── runtime.txt                          # Deployment/runtime marker: python-3.10
 ├── README.md
-├── CHANGELOG_AND_REFACTORING_REPORT.md  # Full changelog and technical report
 │
 ├── jupyter/
 │   ├── 1_Exploratory_Data_Analysis.ipynb          # EDA, chi-square, mutual information, LOF profiling
