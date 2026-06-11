@@ -6,6 +6,27 @@ Binary classification project predicting whether an e-commerce session results i
 
 ---
 
+## Quick Verification
+
+From a fresh download, run these commands from a terminal:
+
+```powershell
+git clone https://github.com/DaniloParisi03/Data-Mining-ML-project.git
+cd Data-Mining-ML-project
+py -3.10 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+cd jupyter
+python -m jupyter nbconvert --to notebook --execute --inplace "1_Exploratory_Data_Analysis.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
+python -m jupyter nbconvert --to notebook --execute --inplace "2_Nested_CV_and_Strict_Pipelines.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
+python -m jupyter nbconvert --to notebook --execute --inplace "3_Evaluation_Ablation_and_XAI.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
+python -m jupyter nbconvert --to notebook --execute --inplace "4_Class_Balancing_Experiments.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
+```
+
+Notebook 2 is the slow step because it runs the full nested cross-validation.
+
+---
+
 ## Results at a Glance
 
 | Model | Nested CV Macro F1 |
