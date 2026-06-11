@@ -1,3 +1,4 @@
+# Python 3.10 is the supported runtime for this project.
 scikit-learn==1.7.2
 imbalanced-learn==0.14.1
 xgboost==3.2.0
@@ -9,7 +10,7 @@ seaborn==0.13.2
 scipy==1.15.3
 joblib==1.5.3
 notebook==7.5.5
-ipykernel
+ipykernel==7.2.0
 nbconvert==7.17.0
 nbformat==5.10.4
 nbclient==0.10.4

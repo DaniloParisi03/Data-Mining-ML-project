@@ -11,7 +11,7 @@ Binary classification project predicting whether an e-commerce session results i
 | Model | Nested CV Macro F1 |
 |---|---|
 | Random Forest | 0.8019 |
-| SVM (RBF) | 0.7986 |
+| SVM | 0.7988 |
 | **XGBoost (Champion)** | **0.8118** |
 
 - **Hold-out Test Macro F1: 0.80** (validated on a locked 20% split, never touched during training)
@@ -23,8 +23,10 @@ Binary classification project predicting whether an e-commerce session results i
 
 ```
 Data-Mining-ML-project/
-├── online_shoppers_intention.csv        # Raw dataset (12,330 sessions, 18 features)
+├── online_shoppers_intention.csv        # Raw dataset (12,330 sessions, 18 columns: 17 predictors + target)
 ├── requirements.txt                     # Exact Python package versions
+├── .python-version                      # Python runtime marker: 3.10
+├── runtime.txt                          # Deployment/runtime marker: python-3.10
 ├── README.md
 ├── CHANGELOG_AND_REFACTORING_REPORT.md  # Full changelog and technical report
 │
@@ -41,7 +43,7 @@ Data-Mining-ML-project/
 │   └── model_metadata.json                        # Champion params, nested CV scores for all 3 models
 │
 ├── figures/
-│   └── fig_01 … fig_08.png                        # Pre-generated report figures (150 dpi)
+│   └── fig_01 … fig_10.png                        # Pre-generated notebook/report figures (150 dpi)
 │
 └── 2_locked_test_data/
     ├── X_test_locked.csv                          # Hold-out feature matrix (sealed by Notebook 2)
@@ -52,7 +54,7 @@ Data-Mining-ML-project/
 
 ## Environment Setup
 
-This project targets **Python 3.10+** with dependencies installed from `requirements.txt`.
+This project targets **Python 3.10** with dependencies installed from `requirements.txt`.
 
 The notebooks intentionally use the portable Jupyter kernel metadata:
 
@@ -61,7 +63,11 @@ display_name: Python 3
 name: python3
 ```
 
-Do **not** require a local course-specific Conda environment name in the project files. Any correctly configured Python environment with the packages from `requirements.txt` is valid.
+Do **not** require a local Conda environment name in the project files. Any correctly configured Python 3.10 environment with the packages from `requirements.txt` is valid.
+
+The repository also includes:
+- `.python-version` — local version-manager marker set to `3.10`
+- `runtime.txt` — deployment/runtime marker set to `python-3.10`
 
 `ipykernel` is included in `requirements.txt` because it is the runtime bridge that allows the selected Python environment to execute Jupyter notebook cells as a **Python 3** kernel.
 
@@ -73,13 +79,13 @@ conda activate online-shoppers-ml
 pip install -r requirements.txt
 ```
 
-### Option B — pip (any Python 3.10+ environment)
+### Option B — pip (any Python 3.10 environment)
 
 ```bash
 pip install -r requirements.txt
 ```
 
-> **Note on SHAP + XGBoost compatibility:** `shap==0.49.1` and `xgboost==3.2.0` require a one-line patch to `shap/explainers/_tree.py` (see `CHANGELOG_AND_REFACTORING_REPORT.md` for details). Without this patch, Notebook 3's SHAP cells will raise a `ValueError` when loading the serialised XGBoost model.
+> **Note on SHAP + XGBoost compatibility:** Notebook 3 includes an in-notebook compatibility wrapper for `shap==0.49.1` with `xgboost==3.2.0`, so a clean `pip install -r requirements.txt` is sufficient. No manual editing of installed packages is required.
 
 ---
 
@@ -128,4 +134,4 @@ LOF_Sampler → StandardScaler → SMOTE → Classifier
 ### Feature Engineering
 - Categorical encoding: `pd.get_dummies` on `Month` and `VisitorType`.
 - Boolean conversion: `Weekend` and `Revenue` cast to `int`.
-- **`Region` dropped** — chi-square test (Notebook 1) found p = 0.32, indicating statistical independence from `Revenue` (α = 0.05).
+- **`Region` dropped** — a train-only chi-square test (Notebook 1, using the same stratified split seed as Notebook 2) found p = 0.6825, indicating statistical independence from `Revenue` (alpha = 0.05). The raw `Region` column is removed; after one-hot encoding, the model uses 25 feature columns.

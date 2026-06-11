@@ -22,6 +22,8 @@ Data-Mining-ML-project/
 │
 ├── online_shoppers_intention.csv        # Raw dataset — never modified
 ├── requirements.txt                     # Exact Python package pins (NEW)
+├── .python-version                      # Python runtime marker: 3.10 (NEW)
+├── runtime.txt                          # Deployment/runtime marker: python-3.10 (NEW)
 ├── README.md                            # Full setup and run instructions (REWRITTEN)
 ├── CHANGELOG_AND_REFACTORING_REPORT.md  # This file (NEW)
 ├── Chi2_result_explanation.md           # Supporting EDA note (unchanged)
@@ -40,7 +42,7 @@ Data-Mining-ML-project/
 │   └── model_metadata.json                        # Champion model metadata (UPDATED)
 │
 ├── figures/
-│   └── fig_01 … fig_08.png                        # Pre-generated report figures (150 dpi) (NEW)
+│   └── fig_01 … fig_10.png                        # Pre-generated notebook/report figures (150 dpi)
 │
 └── 2_locked_test_data/
     ├── X_test_locked.csv                          # Locked hold-out features (UPDATED)
@@ -60,23 +62,23 @@ Each entry below covers what was changed, which file was affected, and why.
 **Files modified:**
 - `jupyter/2_Nested_CV_and_Strict_Pipelines.ipynb` — Cell 1 (feature preparation)
 - `jupyter/3_Evaluation_Ablation_and_XAI.ipynb` — Cell 1 (D_train reconstruction)
-- `2_locked_test_data/X_test_locked.csv` — regenerated (24 features instead of 25)
+- `2_locked_test_data/X_test_locked.csv` — regenerated after dropping raw `Region`
 
 **What changed:**
 ```python
 # BEFORE
-X = df.drop(columns=['Revenue'])          # 25 features
+X = df.drop(columns=['Revenue'])
 
 # AFTER
-X = df.drop(columns=['Revenue', 'Region'])  # 24 features
+X = df.drop(columns=['Revenue', 'Region'])  # raw Region removed; encoded schema has 25 columns
 ```
 
 **Scientific justification:**  
-In Notebook 1, a chi-square test of independence was conducted between every categorical feature and the target `Revenue`. The `Region` feature returned **p = 0.32**, which is well above the standard significance threshold of α = 0.05. This means we cannot reject the null hypothesis that `Region` and `Revenue` are statistically independent — in plain terms, *which geographic region a user belongs to has no statistically distinguishable effect on whether they make a purchase*.
+In Notebook 1, a chi-square test of independence was conducted between every categorical feature and the target `Revenue` using the same stratified training partition later used in Notebook 2. The `Region` feature returned **p = 0.6825**, which is well above the standard significance threshold of alpha = 0.05. This means we cannot reject the null hypothesis that `Region` and `Revenue` are statistically independent — in plain terms, *which geographic region a user belongs to has no statistically distinguishable effect on whether they make a purchase*.
 
 Including statistically irrelevant features in a model can introduce noise into the decision boundary, marginally inflate compute time, and make the model harder to interpret. The empirical ablation in Notebook 3 (Section 1.2) confirms that dropping `Region` does not hurt — and marginally improves — Macro F1.
 
-**Important:** Both the training set reconstruction in NB3 and the locked test set were updated to exclude `Region`, ensuring a consistent 24-feature schema everywhere.
+**Important:** Both the training set reconstruction in NB3 and the locked test set exclude the raw `Region` column. After one-hot encoding `Month` and `VisitorType`, the consistent model schema contains 25 feature columns.
 
 ---
 
@@ -131,7 +133,7 @@ The official project proposal (Bartalucci-Parisi) explicitly requires a comparis
 | Model | Nested CV Macro F1 |
 |---|---|
 | Random Forest | 0.8019 |
-| SVM (RBF) | 0.7986 |
+| SVM | 0.7988 |
 | **XGBoost (Champion)** | **0.8118** |
 
 ---
@@ -169,14 +171,14 @@ The `%run` magic command is necessary (rather than a standard `import`) because 
 - `jupyter/3_Evaluation_Ablation_and_XAI.ipynb` — new cells at index 4 and 5
 
 **What changed:**  
-A second ablation experiment (Section 1.2) was added to quantify the impact of dropping `Region`. An identical XGBoost pipeline at the champion's fixed hyperparameters is evaluated via 5-fold CV on the full 25-feature dataset (Region included), then compared to the champion score on the 24-feature dataset.
+A second ablation experiment (Section 1.2) was added to quantify the impact of dropping `Region`. An identical XGBoost pipeline at the champion's fixed hyperparameters is evaluated via 5-fold CV on the feature set with `Region` included, then compared to the champion schema that drops `Region` and uses 25 encoded feature columns.
 
 **Scientific justification:**  
 Ablation studies are the standard methodology for validating feature engineering decisions in peer-reviewed ML papers. Reporting only the chi-square p-value is an argument from statistical theory; the ablation provides the empirical complement — it directly measures whether the model performs differently with or without the feature. Together, both pieces of evidence (statistical test + empirical comparison) provide a rigorous, reproducible justification for the feature selection decision.
 
 ---
 
-### CHANGE 6 — Add ROC Curve, Precision-Recall Curve & Optimal Threshold to Notebook 3
+### CHANGE 6 — Add ROC Curve, Precision-Recall Curve & Diagnostic Threshold Sweep to Notebook 3
 
 **Files modified:**
 - `jupyter/3_Evaluation_Ablation_and_XAI.ipynb` — new cells at index 8 and 9
@@ -186,14 +188,14 @@ Two new cells (a markdown explanation followed by code) were added after the con
 
 1. **ROC Curve with AUC** — plots the true positive rate vs false positive rate across all decision thresholds.
 2. **Precision-Recall Curve with Average Precision** — plots precision vs recall across all thresholds.
-3. **Optimal Threshold Selection** — sweeps the PR-curve thresholds and selects the value that maximises Purchase-class F1, reporting the classification report at both the default (0.50) and optimal thresholds.
+3. **Diagnostic Threshold Sweep** — sweeps the PR-curve thresholds on the held-out test set to illustrate the Purchase-class precision/recall trade-off, reporting the classification report at both the default (0.50) and post-hoc diagnostic thresholds.
 
 **Scientific justification:**  
 For imbalanced binary classification, accuracy and even the confusion matrix at a single threshold give an incomplete picture:
 
 - **ROC-AUC** is threshold-independent and measures the model's intrinsic discrimination ability. An AUC of 1.0 = perfect; 0.5 = random.
 - **PR-AUC (Average Precision)** is more informative than ROC when the positive class is rare, because it focuses specifically on the minority class. A high AP score indicates the model can retrieve purchasers with high precision, even at moderate recall.
-- **Optimal threshold tuning** addresses a known issue: the default threshold of 0.50 implicitly assumes equal class frequencies and equal misclassification costs. In the real world, a false negative (missing a buyer) likely has greater business cost than a false positive (incorrectly flagging a non-buyer). The optimal threshold gives a decision-maker the tool to tune this trade-off.
+- **Diagnostic threshold analysis** addresses a known issue: the default threshold of 0.50 implicitly assumes equal class frequencies and equal misclassification costs. In the real world, a false negative (missing a buyer) may have greater business cost than a false positive (incorrectly flagging a non-buyer). Because this sweep is performed post-hoc on `D_test`, it is interpretive only and is not reported as tuned generalization performance.
 
 ---
 
@@ -224,10 +226,10 @@ Notebook 4 was previously self-contained but did not explain its relevance to th
 
 ---
 
-### CHANGE 9 — Apply SHAP / XGBoost compatibility patch
+### CHANGE 9 — Add portable SHAP / XGBoost compatibility wrapper
 
-**File patched:**
-- `<conda_env>/Lib/site-packages/shap/explainers/_tree.py`
+**File modified:**
+- `jupyter/3_Evaluation_Ablation_and_XAI.ipynb`
 
 **Problem:**  
 `xgboost==3.2.0` serialises the internal `base_score` parameter as a bracketed string (e.g., `'[4.117431E-1]'`). `shap==0.49.1`'s `TreeExplainer` expects a plain float and calls `float(learner_model_param["base_score"])` directly, which raises:
@@ -236,20 +238,30 @@ ValueError: could not convert string to float: '[4.117431E-1]'
 ```
 
 **Fix applied:**  
-Two lines in `_tree.py` were patched to strip the enclosing brackets before conversion:
+Notebook 3 now installs an idempotent in-memory wrapper around SHAP's UBJSON decoder immediately before `shap.TreeExplainer(...)` is created:
 
 ```python
-# BEFORE
-float(learner_model_param["base_score"])
+import shap.explainers._tree as shap_tree
 
-# AFTER
-float(str(learner_model_param["base_score"]).strip("[]"))
+if not getattr(shap_tree.decode_ubjson_buffer, '_xgb_base_score_compat', False):
+    _original_decode_ubjson_buffer = shap_tree.decode_ubjson_buffer
+
+    def _decode_ubjson_buffer_xgb3_compat(buffer):
+        model = _original_decode_ubjson_buffer(buffer)
+        params = model['learner']['learner_model_param']
+        base_score = params.get('base_score')
+        if isinstance(base_score, str) and base_score.startswith('[') and base_score.endswith(']'):
+            params['base_score'] = base_score.strip('[]')
+        return model
+
+    _decode_ubjson_buffer_xgb3_compat._xgb_base_score_compat = True
+    shap_tree.decode_ubjson_buffer = _decode_ubjson_buffer_xgb3_compat
 ```
 
-This change handles both XGBoost 2.x (plain float string) and 3.x (bracketed string) without breaking either.
+This change handles both XGBoost 2.x (plain float string) and 3.x (bracketed string) without modifying files inside the active Python environment.
 
 **Why not downgrade XGBoost?**  
-Downgrading to a version compatible with `shap` would have meant losing XGBoost 3.x performance improvements and potentially creating future compatibility conflicts. Patching the parsing function is a minimal, targeted fix with no downstream side effects.
+Downgrading to a version compatible with `shap` would have meant losing XGBoost 3.x performance improvements and potentially creating future compatibility conflicts. The in-notebook compatibility wrapper is a minimal, targeted fix that keeps the repository portable after a clean dependency install.
 
 ---
 
@@ -274,7 +286,7 @@ Both files were regenerated on a clean re-run of Notebook 2 after all pipeline c
   },
   "nested_cv_scores": {
     "Random Forest": 0.8019,
-    "SVM": 0.7986,
+    "SVM": 0.7988,
     "XGBoost": 0.8118
   }
 }
@@ -301,13 +313,14 @@ This brought all notebooks into strict `nbformat` v4 compliance, enabling clean 
 
 ---
 
-### CHANGE 12 — Create `requirements.txt`
+### CHANGE 12 — Create dependency and Python runtime specification files
 
-**File created:** `requirements.txt`
+**Files created/updated:** `requirements.txt`, `.python-version`, `runtime.txt`
 
 **Contents:**
 
 ```
+# Python 3.10 is the supported runtime for this project.
 scikit-learn==1.7.2
 imbalanced-learn==0.14.1
 xgboost==3.2.0
@@ -319,14 +332,14 @@ seaborn==0.13.2
 scipy==1.15.3
 joblib==1.5.3
 notebook==7.5.5
-ipykernel
+ipykernel==7.2.0
 nbconvert==7.17.0
 nbformat==5.10.4
 nbclient==0.10.4
 lime==0.2.0.1
 ```
 
-The modelling libraries are pinned to the versions used to validate the project. `ipykernel` is listed explicitly because it is required for a Python environment to run the notebooks through the portable `Python 3` Jupyter kernel. The notebooks intentionally keep generic Jupyter kernel metadata (`display_name: Python 3`, `name: python3`) so the project does **not** depend on any local course-specific Conda environment name.
+The modelling libraries are pinned to the versions used to validate the project. `ipykernel` is listed explicitly because it is required for a Python 3.10 environment to run the notebooks through the portable `Python 3` Jupyter kernel. The notebooks intentionally keep generic Jupyter kernel metadata (`display_name: Python 3`, `name: python3`) so the project does **not** depend on any local Conda environment name. The `.python-version` file contains `3.10`, and `runtime.txt` contains `python-3.10`, making Python 3.10 the definitive project runtime.
 
 ---
 
@@ -354,7 +367,7 @@ The original README contained a single-line description. It was replaced with a 
 | 2 | Code | Numerical feature distributions (histograms, boxplots) |
 | 3 | Code | Categorical feature analysis |
 | 4 | Code | Correlation heatmap |
-| 5 | Code | Chi-square tests → `Region` flagged as non-significant (p=0.32) |
+| 5 | Code | Chi-square tests → `Region` flagged as non-significant (p=0.6825) |
 | 6 | Code | Mutual information scores |
 | 7 | Code | LOF profiling (density of outliers in feature space) |
 
@@ -390,11 +403,11 @@ The original README contained a single-line description. It was replaced with a 
 | 2 | Markdown | Ablation Section 1.1: LOF |
 | 3 | Code | LOF ablation — compare champion vs same pipeline without LOF |
 | 4 | Markdown | Ablation Section 1.2: Region |
-| 5 | Code | Region ablation — compare 24-feature vs 25-feature pipeline |
+| 5 | Code | Region ablation — compare champion schema vs schema with `Region` included |
 | 6 | Markdown | Final Test Set Evaluation |
 | 7 | Code | Unseal D_test, `champion_pipeline.predict`, confusion matrix, classification report |
 | 8 | Markdown | ROC / PR / Threshold intro |
-| 9 | Code | ROC curve, PR curve, optimal threshold sweep + side-by-side plot |
+| 9 | Code | ROC curve, PR curve, diagnostic threshold sweep + side-by-side plot |
 | 10 | Markdown | SHAP explanation |
 | 11 | Code | SHAP global: `summary_plot` (feature importance across D_test) |
 | 12 | Code | SHAP local: `waterfall` plots for TP, FP and FN instances |
@@ -439,11 +452,11 @@ class LOF_Sampler(BaseSampler):
 
 ### CHANGE 14 — Add Pearson heatmap to NB1; add `plt.savefig` to all figure cells; create `figures/` directory
 
-**Files created:** `figures/fig_01_class_dist.png` through `figures/fig_08_shap_waterfall.png`  
+**Files created:** `figures/fig_01_class_dist.png` through `figures/fig_10_error_profile.png`
 **Files modified:** `jupyter/1_Exploratory_Data_Analysis.ipynb`, `jupyter/3_Evaluation_Ablation_and_XAI.ipynb`
 
 **What changed:**  
-The Pearson correlation heatmap was referenced in the LaTeX report (`fig:corr`) but did not exist in NB1. A new code cell was inserted to generate and save it. `plt.savefig()` calls were added to all seven other figure-producing cells across NB1 and NB3, and the `figures/` directory was created to collect all eight output PNGs at 150 dpi.
+The Pearson correlation heatmap was referenced in the LaTeX report (`fig:corr`) but did not exist in NB1. A new code cell was inserted to generate and save it. `plt.savefig()` calls were added to all figure-producing cells across NB1, NB2, and NB3, and the `figures/` directory collects generated PNGs at 150 dpi. NB3 is also configured to save the LIME false-positive explanation as `fig_11_lime_fp.png` when that cell is executed in a fully configured Python 3.10 environment.
 
 **Reason:**  
 All figures referenced in the LaTeX report must be real, generated images that the author can upload to Overleaf. Without savefig calls, figures only display inline and cannot be exported programmatically.
@@ -575,7 +588,7 @@ Three design decisions ensure zero leakage:
 
 | Item | Description |
 |---|---|
-| **SHAP/XGBoost patch** | The `shap==0.49.1` library requires a manual patch when used with `xgboost>=3.0.0`. This will be resolved in a future `shap` release. |
+| **SHAP/XGBoost compatibility** | Notebook 3 includes a portable in-memory compatibility wrapper for `shap==0.49.1` with `xgboost>=3.0.0`. This can be removed once SHAP supports the XGBoost 3.x `base_score` format natively. |
 | **SVM runtime** | The SVM nested CV is significantly slower than RF and XGBoost (no `n_jobs` gain for kernel SVM). Future versions could substitute `LinearSVC` for the linear kernel evaluation. |
 | **Feature selection formality** | The current feature selection is based on chi-square (categorical) and mutual information (continuous). A wrapper-based selection (e.g., Recursive Feature Elimination) integrated within the pipeline could be explored. |
 | **Deployment** | The saved `.pkl` pipeline is ready for serving via FastAPI / Flask. A lightweight inference endpoint is a natural next step. |

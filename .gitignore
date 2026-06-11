@@ -3,6 +3,7 @@
 **/.ipynb_checkpoints/
 
 # Python
+.venv/
 __pycache__/
 *.py[cod]
 *.pyo

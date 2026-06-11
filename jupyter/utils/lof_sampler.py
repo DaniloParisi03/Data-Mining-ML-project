@@ -50,11 +50,11 @@ class LOF_Sampler(BaseSampler):
         outlier_flags = lof.fit_predict(X)
         mask = outlier_flags == 1
 
-        # BaseSampler's validation can convert DataFrames to NumPy arrays;
-        # this slice works regardless of the input type.
-        if isinstance(X, pd.DataFrame) or hasattr(X, "iloc"):
-            return X.iloc[mask], y.iloc[mask]
-        return X[mask], y[mask]
+        # BaseSampler's validation can convert X and y independently, so slice
+        # each object according to its own interface.
+        X_clean = X.iloc[mask] if isinstance(X, pd.DataFrame) or hasattr(X, "iloc") else X[mask]
+        y_clean = y.iloc[mask] if hasattr(y, "iloc") else y[mask]
+        return X_clean, y_clean
 
 
 print("LOF_Sampler loaded from utils/lof_sampler.py")
