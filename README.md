@@ -38,7 +38,6 @@ Data-Mining-ML-project/
 ├── online_shoppers_intention.csv        # Raw dataset (12,330 sessions, 18 columns: 17 predictors + target)
 ├── requirements.txt                     # Exact Python package versions
 ├── .python-version                      # Python runtime marker: 3.10
-├── runtime.txt                          # Deployment/runtime marker: python-3.10
 ├── README.md
 │
 ├── jupyter/
