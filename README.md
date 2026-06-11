@@ -6,41 +6,32 @@ Binary classification project predicting whether an e-commerce session results i
 
 ---
 
-## Quick Verification
+## 1. Project Purpose and Methodology
 
-From a fresh download, run these commands from a terminal:
+This project studies the UCI Online Shoppers Purchasing Intention dataset and builds a machine learning pipeline to predict whether an online browsing session ends in a purchase (`Revenue = True`).
 
-```powershell
-git clone https://github.com/DaniloParisi03/Data-Mining-ML-project.git
-cd Data-Mining-ML-project
-py -3.10 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-cd jupyter
-python -m jupyter nbconvert --to notebook --execute --inplace "1_Exploratory_Data_Analysis.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
-python -m jupyter nbconvert --to notebook --execute --inplace "2_Nested_CV_and_Strict_Pipelines.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
-python -m jupyter nbconvert --to notebook --execute --inplace "3_Evaluation_Ablation_and_XAI.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
-python -m jupyter nbconvert --to notebook --execute --inplace "4_Class_Balancing_Experiments.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
+The task is a binary classification problem, but it is not a perfectly balanced one: most sessions do not lead to a purchase. For this reason, the project uses **Macro F1-score** as the primary metric, because it gives balanced importance to both purchase and non-purchase classes.
+
+The full workflow is notebook-based and covers the main stages of a data mining project:
+
+- Exploratory data analysis, including class imbalance, correlations, chi-square tests, mutual information, and LOF-based outlier profiling.
+- Leakage-safe preprocessing and model training with `imblearn` pipelines.
+- Nested cross-validation to compare Random Forest, SVM, and XGBoost.
+- Class-balancing experiments with undersampling, oversampling, SMOTE, and ADASYN.
+- Final evaluation on a locked hold-out test set.
+- Explainability and critical analysis using SHAP, LIME, ablation studies, threshold diagnostics, and error profiling.
+
+The core modeling pipeline is:
+
+```text
+LOF_Sampler -> StandardScaler -> SMOTE -> Classifier
 ```
 
-Notebook 2 is the slow step because it runs the full nested cross-validation.
+The most important methodological rule is strict train/test isolation: the locked test set is created once in Notebook 2 and is used only for final evaluation and diagnostics. Preprocessing, outlier removal, and SMOTE are fitted inside cross-validation folds so validation and test data never influence training decisions. The final champion model is **XGBoost**.
 
 ---
 
-## Results at a Glance
-
-| Model | Nested CV Macro F1 |
-|---|---|
-| Random Forest | 0.8019 |
-| SVM | 0.7988 |
-| **XGBoost (Champion)** | **0.8118** |
-
-- **Hold-out Test Macro F1: 0.80** (validated on a locked 20% split, never touched during training)
-- Benchmark from Sakar et al. (2018): 0.61 — our pipeline achieves a **+31% improvement**
-
----
-
-## Repository Structure
+## 2. Repository Structure
 
 ```
 Data-Mining-ML-project/
@@ -73,26 +64,50 @@ Data-Mining-ML-project/
 
 ---
 
-## Environment Setup
+## 3. Results
 
-This project targets **Python 3.10** with dependencies installed from `requirements.txt`.
+| Model | Nested CV Macro F1 |
+|---|---|
+| Random Forest | 0.8019 |
+| SVM | 0.7988 |
+| **XGBoost (Champion)** | **0.8118** |
 
-The notebooks intentionally use the portable Jupyter kernel metadata:
+- **Hold-out Test Macro F1:** 0.80, validated on the locked 20% test split.
+- **ROC-AUC:** 0.9260.
+- **Average Precision:** 0.7225.
+- **Benchmark from Sakar et al. (2018):** 0.61 Macro F1.
+
+---
+
+## 4. How to Test the Project Yourself
+
+The project targets **Python 3.10** and uses the generic Jupyter kernel metadata:
 
 ```text
 display_name: Python 3
 name: python3
 ```
 
-Do **not** require a local Conda environment name in the project files. Any correctly configured Python 3.10 environment with the packages from `requirements.txt` is valid.
+No machine-specific Jupyter kernel name is required.
 
-The repository also includes:
-- `.python-version` — local version-manager marker set to `3.10`
-- `runtime.txt` — deployment/runtime marker set to `python-3.10`
+### Step 1 — Download and enter the repository
 
-`ipykernel` is included in `requirements.txt` because it is the runtime bridge that allows the selected Python environment to execute Jupyter notebook cells as a **Python 3** kernel.
+```powershell
+git clone https://github.com/DaniloParisi03/Data-Mining-ML-project.git
+cd Data-Mining-ML-project
+```
 
-### Option A — Conda (recommended)
+### Step 2 — Create and activate a Python 3.10 environment
+
+Using a local virtual environment:
+
+```powershell
+py -3.10 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+Alternatively, with Conda:
 
 ```bash
 conda create -n online-shoppers-ml python=3.10 -y
@@ -100,59 +115,37 @@ conda activate online-shoppers-ml
 pip install -r requirements.txt
 ```
 
-### Option B — pip (any Python 3.10 environment)
+Notebook 3 includes an in-notebook SHAP/XGBoost compatibility wrapper, so no manual editing of installed packages is required.
 
-```bash
-pip install -r requirements.txt
+### Step 3 — Run the notebooks in order
+
+Launch Jupyter:
+
+```powershell
+python -m jupyter notebook
 ```
 
-> **Note on SHAP + XGBoost compatibility:** Notebook 3 includes an in-notebook compatibility wrapper for `shap==0.49.1` with `xgboost==3.2.0`, so a clean `pip install -r requirements.txt` is sufficient. No manual editing of installed packages is required.
+Open the `jupyter/` folder, select the **Python 3** kernel, and execute these notebooks with **Kernel -> Restart & Run All**:
 
----
+| Order | Notebook | What it verifies |
+|---|---|---|
+| 1 | `1_Exploratory_Data_Analysis.ipynb` | Dataset checks, imbalance, EDA, feature-selection evidence |
+| 2 | `2_Nested_CV_and_Strict_Pipelines.ipynb` | Locked test split, leakage-safe pipelines, nested CV, saved model |
+| 3 | `3_Evaluation_Ablation_and_XAI.ipynb` | Final locked-test evaluation, ablations, SHAP, LIME, error analysis |
+| 4 | `4_Class_Balancing_Experiments.ipynb` | Class-balancing comparison and SMOTE ratio justification |
 
-## How to Run
+Notebook 2 is the slow step because it runs full nested cross-validation and grid searches.
 
-Notebooks **must be executed in order** (each notebook depends on outputs from the previous one):
+### Optional — Terminal execution instead of VS Code/Jupyter
 
-| Step | Notebook | Outputs produced | Runtime (approx.) |
-|---|---|---|---|
-| 1 | `1_Exploratory_Data_Analysis.ipynb` | EDA plots, chi-square table | ~2 min |
-| 2 | `2_Nested_CV_and_Strict_Pipelines.ipynb` | `models/`, `2_locked_test_data/` | ~15–20 min |
-| 3 | `3_Evaluation_Ablation_and_XAI.ipynb` | Evaluation plots, SHAP charts, LIME explanation | ~5 min |
-| 4 | `4_Class_Balancing_Experiments.ipynb` | SMOTE comparison chart | ~3 min |
+If you prefer to execute the notebooks directly from the terminal, run the following commands after activating the environment and installing `requirements.txt`:
 
-### Launch Jupyter
-
-```bash
-conda activate online-shoppers-ml
-jupyter notebook
+```powershell
+cd jupyter
+python -m jupyter nbconvert --to notebook --execute --inplace "1_Exploratory_Data_Analysis.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
+python -m jupyter nbconvert --to notebook --execute --inplace "2_Nested_CV_and_Strict_Pipelines.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
+python -m jupyter nbconvert --to notebook --execute --inplace "3_Evaluation_Ablation_and_XAI.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
+python -m jupyter nbconvert --to notebook --execute --inplace "4_Class_Balancing_Experiments.ipynb" --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=7200
 ```
 
-Then open each notebook from the `jupyter/` folder, select the generic **Python 3** kernel, and run **Kernel → Restart & Run All**.
-
----
-
-## Methodology Overview
-
-### Pipeline Architecture
-Each model is wrapped in an `imblearn.Pipeline` with the following sequential steps:
-
-```
-LOF_Sampler → StandardScaler → SMOTE → Classifier
-```
-
-1. **LOF_Sampler** — `LocalOutlierFactor`-based custom sampler that removes outliers only within each training fold (prevents data leakage). `n_neighbors=100`, `contamination=0.05`.
-2. **StandardScaler** — Feature standardisation (required for SVM; harmless for tree-based models).
-3. **SMOTE** — Synthetic oversampling of the minority class. `sampling_strategy=0.7` (determined empirically in Notebook 4).
-4. **Classifier** — The model under evaluation (RF / SVM / XGBoost).
-
-### Validation Strategy: Nested Cross-Validation
-- **Outer loop:** `StratifiedKFold(n_splits=5)` — unbiased performance estimate.
-- **Inner loop:** `GridSearchCV(cv=3)` — hyperparameter optimisation.
-- **Metric:** Macro F1-score (equally weights both classes; robust to imbalance).
-- The test set is **fully isolated** from training — locked to CSV after the initial split in Notebook 2.
-
-### Feature Engineering
-- Categorical encoding: `pd.get_dummies` on `Month` and `VisitorType`.
-- Boolean conversion: `Weekend` and `Revenue` cast to `int`.
-- **`Region` dropped** — a train-only chi-square test (Notebook 1, using the same stratified split seed as Notebook 2) found p = 0.6825, indicating statistical independence from `Revenue` (alpha = 0.05). The raw `Region` column is removed; after one-hot encoding, the model uses 25 feature columns.
+`kernel_name=python3` forces the generic project kernel, while `timeout=7200` gives the long nested-CV cells enough time to finish.
